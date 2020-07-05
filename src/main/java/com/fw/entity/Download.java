@@ -1,12 +1,11 @@
-package entity;
+package com.fw.entity;
 
 import java.io.Serializable;
-import java.util.concurrent.CountDownLatch;
 
 /**
  * @author yqf
  */
-public class DownLoad implements Serializable {
+public class Download implements Serializable {
     /**
      * 下载服务器地址
      * */
@@ -25,7 +24,7 @@ public class DownLoad implements Serializable {
                 '}';
     }
 
-    public DownLoad(String serverPath, String localPath, int numberOfBytes) {
+    public Download(String serverPath, String localPath, int numberOfBytes) {
         this.serverPath = serverPath;
         this.localPath = localPath;
         this.numberOfBytes = numberOfBytes;

@@ -1,34 +1,59 @@
-import com.fw.utils.DownLoadThread;
-import com.fw.utils.MultithreadingDownLoad;
-import entity.DownLoad;
+import com.fw.entity.Download;
+import com.fw.entity.MultithreadingDownLoad;
+import com.fw.factory.DownloadThreadFactory;
+import com.fw.http.HttpHeader;
+import com.fw.http.HttpStatus;
+import com.fw.utils.HttpHeaderIterator;
 
-import java.util.concurrent.CountDownLatch;
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.Map;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 public class Test {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException, InterruptedException {
         //线程开启数
-        int threadSize = 100;
+        int threadSize = 10;
+        //分段下载大小
+        int numberOfBytes = 1024*1024;
+        //线程工厂名
+        String threadFactoryName = "download";
+        //核心线程数
+        int corePoolSize = 10;
+        //最大线程数
+        int maximumPoolSize = 10;
+        //非核心线程保持时间
+        int keepAliveTime = 5;
+        //服务器地址
+        String serverPath = "http://mirrors.aliyun.com/centos/7/isos/x86_64/CentOS-7-x86_64-DVD-2003.iso";
+        //本地下载地址
+        String localPath = "/home/yqf/下载/CentOS-7-x86_64-DVD-2003.iso";
 
-        CountDownLatch latch = new CountDownLatch(threadSize);
+        LinkedBlockingQueue<Runnable> blockingQueue = new LinkedBlockingQueue<Runnable>();
 
-        DownLoad downLoad = new DownLoad(
-                "http://mirrors.163.com/debian/ls-lR.gz",
-                "/home/yqf/下载/ls-lR.gz",
-                1024
+        DownloadThreadFactory downloadThreadFactory = new DownloadThreadFactory(threadFactoryName);
+
+        ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(
+                corePoolSize,
+                maximumPoolSize,
+                keepAliveTime,
+                TimeUnit.SECONDS,
+                blockingQueue,
+                downloadThreadFactory
 
         );
 
+        Download downLoad = new Download(serverPath,localPath,numberOfBytes);
 
-        MultithreadingDownLoad m = new MultithreadingDownLoad(threadSize,downLoad,latch);
-        long startTime = System.currentTimeMillis();
-        try {
-            m.executeDownLoad();
-            latch.await();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        long endTime = System.currentTimeMillis();
-        System.out.println("全部下载结束,共耗时" + (endTime - startTime) / 1000 + "s");
+
+        MultithreadingDownLoad m = new MultithreadingDownLoad(threadPoolExecutor,threadSize,downLoad);
+        m.executeDownLoad();
+        m.downloadProgress();
+
 
     }
 }
